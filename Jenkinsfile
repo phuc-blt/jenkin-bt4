@@ -70,6 +70,7 @@ pipeline {
                 script {
                     try {
                         echo "Starting FastAPI container..."
+
                         // Check if container already exists and remove it if needed
                         sh '''
                         if docker ps -a --filter name=fastapi_container | grep -q fastapi_container; then
@@ -79,6 +80,9 @@ pipeline {
                        
                         docker run --name fastapi_container -p 8000:80 -d fastapi_app
                         '''
+
+                        // Wait a few seconds for the container to be ready
+                        sleep 10
 
                         // Check if the container started successfully
                         sh '''
@@ -105,34 +109,34 @@ pipeline {
         }
 
         stage('Run Unit Tests') {
-    steps {
-        script {
-            try {
-                echo "Running unit tests..."
+            steps {
+                script {
+                    try {
+                        echo "Running unit tests..."
 
-                // Wait for the FastAPI container to be ready
-                sleep 10
+                        // Wait for the FastAPI container to be fully ready
+                        sleep 10
 
-                // Run tests inside the container with updated PYTHONPATH
-                sh '''
-                docker exec fastapi_container sh -c "export PYTHONPATH=/app && pytest --junitxml=/app/reports/test-results.xml"
-                '''
+                        // Run tests inside the container with updated PYTHONPATH
+                        sh '''
+                        docker exec fastapi_container sh -c "export PYTHONPATH=/app && pytest --junitxml=/app/reports/test-results.xml"
+                        '''
 
-                withChecks('Run Unit Tests') {
-                    publishChecks name: 'Run Unit Tests', status: 'COMPLETED', conclusion: 'SUCCESS',
-                                 summary: 'All unit tests passed successfully.'
+                        withChecks('Run Unit Tests') {
+                            publishChecks name: 'Run Unit Tests', status: 'COMPLETED', conclusion: 'SUCCESS',
+                                         summary: 'All unit tests passed successfully.'
+                        }
+                    } catch (e) {
+                        withChecks('Run Unit Tests') {
+                            publishChecks name: 'Run Unit Tests', status: 'COMPLETED', conclusion: 'FAILURE',
+                                         summary: 'Some unit tests failed.'
+                        }
+                        throw e
+                    }
                 }
-            } catch (e) {
-                withChecks('Run Unit Tests') {
-                    publishChecks name: 'Run Unit Tests', status: 'COMPLETED', conclusion: 'FAILURE',
-                                 summary: 'Some unit tests failed.'
-                }
-                throw e
             }
         }
     }
-}
-
 
     post {
         always {
