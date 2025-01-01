@@ -1,18 +1,18 @@
-# Use an official Python runtime as a parent image
-FROM python:3.10-slim
+# Sử dụng image Python chính thức
+FROM python:3.9-slim
 
-# Set the working directory in the container
+# Thiết lập thư mục làm việc
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
+# Cài đặt các thư viện cần thiết
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy mã nguồn vào container
 COPY . /app
 
-ENV PORT 80
-
-# Expose the port to the outside world
+# Cấu hình port mà FastAPI sẽ chạy
 EXPOSE 80
-#test
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
-# Run the application
-CMD ["/bin/bash", "-c", "python3 main.py"]
+
+# Lệnh để chạy ứng dụng FastAPI
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
