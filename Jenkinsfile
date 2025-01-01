@@ -115,7 +115,25 @@ pipeline {
                         echo "Running unit tests..."
 
                         // Wait for the FastAPI container to be fully ready
-                        sleep 10
+                        def maxWaitTime = 60  // Max wait time in seconds
+                        def waitTime = 0
+
+                        // Wait until container is up and running
+                        while (waitTime < maxWaitTime) {
+                            def status = sh(script: 'docker ps -q --filter "name=fastapi_container"', returnStatus: true)
+                            if (status == 0) {
+                                echo "FastAPI container is running."
+                                break
+                            } else {
+                                echo "Waiting for FastAPI container to be ready..."
+                                sleep(5)
+                                waitTime += 5
+                            }
+                        }
+
+                        if (waitTime >= maxWaitTime) {
+                            error "FastAPI container did not start within ${maxWaitTime} seconds."
+                        }
 
                         // Run tests inside the container with updated PYTHONPATH
                         sh '''
