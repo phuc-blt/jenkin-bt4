@@ -70,16 +70,29 @@ pipeline {
                 script {
                     try {
                         echo "Starting FastAPI container..."
+
+                        // Check if container already exists and remove it if needed
                         sh '''
-                        # Stop and remove any existing container
                         if docker ps -a --filter name=fastapi_container | grep -q fastapi_container; then
                             docker stop fastapi_container
                             docker rm fastapi_container
                         fi
+                        '''
 
-                        # Run a new container
+                        // Run the new container
+                        sh '''
                         docker run --name fastapi_container -p 8000:80 -d fastapi_app
                         '''
+
+                        // Check if the container started successfully
+                        sh '''
+                        docker ps -a --filter name=fastapi_container | grep -q fastapi_container
+                        if [ $? -ne 0 ]; then
+                            echo "FastAPI container failed to start!"
+                            exit 1
+                        fi
+                        '''
+
                         withChecks('Run FastAPI Container') {
                             publishChecks name: 'Run FastAPI Container', status: 'COMPLETED', conclusion: 'SUCCESS',
                                          summary: 'FastAPI container is running successfully.'
@@ -100,8 +113,12 @@ pipeline {
                 script {
                     try {
                         echo "Running unit tests..."
+
+                        // Wait for the FastAPI container to be ready
+                        sleep 10
+
+                        // Run tests inside the container
                         sh '''
-                        # Run tests inside the container
                         docker exec fastapi_container pytest --junitxml=reports/test-results.xml
                         '''
                         withChecks('Run Unit Tests') {
