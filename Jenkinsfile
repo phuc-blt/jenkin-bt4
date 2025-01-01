@@ -76,7 +76,7 @@ pipeline {
                             docker stop fastapi_container
                             docker rm fastapi_container
                         fi
-                        // Run the new container
+                       
                         docker run --name fastapi_container -p 8000:80 -d fastapi_app
                         '''
 
