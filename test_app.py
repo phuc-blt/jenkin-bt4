@@ -7,7 +7,8 @@ client = TestClient(app)
 def test_get_version():
     response = client.get("/get_version")
     assert response.status_code == 200
-    assert response.json() == {"version": "1.0"}
+    assert response.json() == {"version": "1.0.0"}
+
 
 # Test case 2: Kiểm tra route /check_prime với số nguyên tố hợp lệ
 def test_check_prime_valid_prime():
