@@ -135,6 +135,12 @@ pipeline {
                             error "FastAPI container did not start within ${maxWaitTime} seconds."
                         }
 
+                        // Check logs if container fails to start or if it's in a crash state
+                        echo "Fetching logs of the FastAPI container..."
+                        sh '''
+                        docker logs fastapi_container
+                        '''
+
                         // Run tests inside the container with updated PYTHONPATH
                         sh '''
                         docker exec fastapi_container sh -c "export PYTHONPATH=/app && pytest --junitxml=/app/reports/test-results.xml"
