@@ -7,7 +7,7 @@ pipeline {
                 [key: 'WEBHOOK_TRIGGER', value: '$.trigger', defaultValue: '']
             ],
             causeString: 'Triggered by webhook',
-            token: 'push_here',
+            token: 'push_up',
             printContributedVariables: true,
             printPostContent: true
         )
@@ -36,7 +36,7 @@ pipeline {
                     checkout([
                         $class: 'GitSCM',
                         branches: [[name: '*/main']],
-                        userRemoteConfigs: [[url: 'https://github.com/phuc-blt/Jenkins_test.git']]
+                        userRemoteConfigs: [[url: 'https://github.com/phuc-blt/jenkin-bt4.git']]
                     ])
                 }
             }
