@@ -104,34 +104,35 @@ pipeline {
             }
         }
 
-        stage('Run Unit Tests') {
-            steps {
-                script {
-                    try {
-                        echo "Running unit tests..."
+stage('Run Unit Tests') {
+    steps {
+        script {
+            try {
+                echo "Running unit tests..."
 
-                        // Wait for the FastAPI container to be ready
-                        sleep 10
+                // Wait for the FastAPI container to be ready
+                sleep 10
 
-                        // Run tests inside the container
-                        sh '''
-                        docker exec fastapi_container pytest --junitxml=reports/test-results.xml
-                        '''
-                        withChecks('Run Unit Tests') {
-                            publishChecks name: 'Run Unit Tests', status: 'COMPLETED', conclusion: 'SUCCESS',
-                                         summary: 'All unit tests passed successfully.'
-                        }
-                    } catch (e) {
-                        withChecks('Run Unit Tests') {
-                            publishChecks name: 'Run Unit Tests', status: 'COMPLETED', conclusion: 'FAILURE',
-                                         summary: 'Some unit tests failed.'
-                        }
-                        throw e
-                    }
+                // Run tests inside the container with updated PYTHONPATH
+                sh '''
+                docker exec fastapi_container sh -c "export PYTHONPATH=/app && pytest --junitxml=/app/reports/test-results.xml"
+                '''
+
+                withChecks('Run Unit Tests') {
+                    publishChecks name: 'Run Unit Tests', status: 'COMPLETED', conclusion: 'SUCCESS',
+                                 summary: 'All unit tests passed successfully.'
                 }
+            } catch (e) {
+                withChecks('Run Unit Tests') {
+                    publishChecks name: 'Run Unit Tests', status: 'COMPLETED', conclusion: 'FAILURE',
+                                 summary: 'Some unit tests failed.'
+                }
+                throw e
             }
         }
     }
+}
+
 
     post {
         always {
