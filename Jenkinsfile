@@ -78,10 +78,10 @@ pipeline {
                             docker rm fastapi_container
                         fi
                        
-                        docker run --name fastapi_container -p 8000:80 -d fastapi_app
+                        docker run --name fastapi_container -p 8000:80 -d fastapi_app uvicorn main:app --host 0.0.0.0 --port 80
                         '''
 
-                        // Wait a few seconds for the container to be ready
+                        // Wait for the container to be ready
                         sleep 10
 
                         // Check if the container started successfully
@@ -108,36 +108,14 @@ pipeline {
             }
         }
 
-        stage('Check FastAPI Container Status') {
-            steps {
-                script {
-                    try {
-                        // Check if the FastAPI container is running
-                        def containerStatus = sh(script: 'docker ps -q --filter "name=fastapi_container"', returnStatus: true)
-                        
-                        if (containerStatus != 0) {
-                            error "FastAPI container is not running, aborting tests."
-                        } else {
-                            echo "FastAPI container is running."
-                        }
-
-                        // Fetch logs if container isn't running
-                        sh '''
-                        docker logs fastapi_container || true
-                        '''
-                    } catch (e) {
-                        echo "Error checking container status: ${e}"
-                        throw e
-                    }
-                }
-            }
-        }
-
         stage('Run Unit Tests') {
             steps {
                 script {
                     try {
                         echo "Running unit tests..."
+
+                        // Wait for the FastAPI container to be ready
+                        sleep 10
 
                         // Run tests inside the container with updated PYTHONPATH
                         sh '''
