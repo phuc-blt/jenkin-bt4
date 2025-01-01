@@ -108,38 +108,36 @@ pipeline {
             }
         }
 
+        stage('Check FastAPI Container Status') {
+            steps {
+                script {
+                    try {
+                        // Check if the FastAPI container is running
+                        def containerStatus = sh(script: 'docker ps -q --filter "name=fastapi_container"', returnStatus: true)
+                        
+                        if (containerStatus != 0) {
+                            error "FastAPI container is not running, aborting tests."
+                        } else {
+                            echo "FastAPI container is running."
+                        }
+
+                        // Fetch logs if container isn't running
+                        sh '''
+                        docker logs fastapi_container || true
+                        '''
+                    } catch (e) {
+                        echo "Error checking container status: ${e}"
+                        throw e
+                    }
+                }
+            }
+        }
+
         stage('Run Unit Tests') {
             steps {
                 script {
                     try {
                         echo "Running unit tests..."
-
-                        // Wait for the FastAPI container to be fully ready
-                        def maxWaitTime = 60  // Max wait time in seconds
-                        def waitTime = 0
-
-                        // Wait until container is up and running
-                        while (waitTime < maxWaitTime) {
-                            def status = sh(script: 'docker ps -q --filter "name=fastapi_container"', returnStatus: true)
-                            if (status == 0) {
-                                echo "FastAPI container is running."
-                                break
-                            } else {
-                                echo "Waiting for FastAPI container to be ready..."
-                                sleep(5)
-                                waitTime += 5
-                            }
-                        }
-
-                        if (waitTime >= maxWaitTime) {
-                            error "FastAPI container did not start within ${maxWaitTime} seconds."
-                        }
-
-                        // Check logs if container fails to start or if it's in a crash state
-                        echo "Fetching logs of the FastAPI container..."
-                        sh '''
-                        docker logs fastapi_container
-                        '''
 
                         // Run tests inside the container with updated PYTHONPATH
                         sh '''
