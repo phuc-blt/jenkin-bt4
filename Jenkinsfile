@@ -70,17 +70,17 @@ pipeline {
                 script {
                     try {
                         echo "Starting FastAPI container..."
-                        
-                        // Check if container exists, if yes, stop and remove it before running a new one
+
+                        // Remove any previous container with the same name if it exists
                         sh '''
                         if docker ps -a --filter name=fastapi_container | grep -q fastapi_container; then
                             docker stop fastapi_container
                             docker rm fastapi_container
                         fi
-                        
-                        docker run --name fastapi_container -p 8000:80 -d fastapi_app uvicorn main:app --host 0.0.0.0 --port 80
+                       
+                        docker run --name fastapi_container -p 3000:80 -d fastapi_app
                         '''
-                        
+
                         // Check if the container started successfully
                         sh '''
                         docker ps -a --filter name=fastapi_container | grep -q fastapi_container
